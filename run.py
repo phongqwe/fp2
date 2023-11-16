@@ -28,9 +28,9 @@ hansBiasTypeFilter = None
 
 useGDNLI_SNLI = True
 
-snliParZ = "/Users/phong/gits/nlp/fp-dataset-artifacts/gd-nli/snli_par-z.jsonl"
-snliSeqZ = "/Users/phong/gits/nlp/fp-dataset-artifacts/gd-nli/snli_seq-z.jsonl"
-snliAugZ = "/Users/phong/gits/nlp/fp-dataset-artifacts/gd-nli/snli_z-aug.jsonl"
+snliParZ = "./gd-nli/snli_par-z.jsonl"
+snliSeqZ = "./gd-nli/snli_seq-z.jsonl"
+snliAugZ = "./gd-nli/snli_z-aug.jsonl"
 gdnliDatasetPath = snliParZ
 def readGDNLI():
     from datasets import load_dataset
