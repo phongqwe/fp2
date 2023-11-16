@@ -9,7 +9,7 @@ import json
 
 NUM_PREPROCESSING_WORKERS = 2
 """
-
+python3 run.py --do_train --task nli --dataset snli --output_dir ../trained_model_snli_par_z/
 """
 # continue training from a checkpoint
 rfc=True
@@ -28,9 +28,12 @@ hansBiasTypeFilter = None
 
 useGDNLI_SNLI = True
 
-snliParZ = "./gd-nli/snli_par-z.jsonl"
-snliSeqZ = "./gd-nli/snli_seq-z.jsonl"
-snliAugZ = "./gd-nli/snli_z-aug.jsonl"
+pretrainedPath = "../trained_model_snli_par_z/"
+
+snliParZ = "../gd-nli/snli_par-z.jsonl"
+snliSeqZ = "../gd-nli/snli_seq-z.jsonl"
+snliAugZ = "../gd-nli/snli_z-aug.jsonl"
+
 gdnliDatasetPath = snliParZ
 def readGDNLI():
     from datasets import load_dataset
