@@ -1,3 +1,6 @@
+import dataclasses
+from dataclasses import dataclass
+
 import datasets
 from datasets import concatenate_datasets
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, \
@@ -13,13 +16,13 @@ note: --dataset argument here is override inside the code, so it doesn't matter 
 python3 run.py --do_train --task nli --dataset snli --output_dir ../trained_model_snli_par_z/ --per_device_train_batch_size 256
 """
 # continue training from a checkpoint
-rfc=False
+rfc = False
 # run evaluation or not
 runEvaluation = True
 # run evaluation on test set
 runEvaluationOnTestSet = True
-# replace SNLI with HANS
-useHans = True
+# replace SNLI with HANS, this will override runEvaluationOnTestSet
+useHans = False
 
 # 3 possible values:
 # "lexical_overlap",
@@ -30,12 +33,11 @@ useHans = True
 hansOverlap = "lexical_overlap"
 hansSubsequence = "subsequence"
 hansConstituent = "constituent"
-hansBiasTypeFilter = hansSubsequence
+hansBiasTypeFilter = None
 # only evaluate on one type of label 1: entail, 2: non-entail, None: don't do it
 hansLabel = None
 
 useGDNLI_SNLI = False
-use_All_GDNLI = False
 
 snliParZ = "../gd-nli/snli_par-z.jsonl"
 snliSeqZ = "../gd-nli/snli_seq-z.jsonl"
@@ -43,23 +45,43 @@ snliAugZ = "../gd-nli/snli_z-aug.jsonl"
 
 gdnliDatasetPath = snliAugZ
 
+baseLineModel = "./trained_model_base"
+
 snliParZModel = "../trained_model_snli_par_z"
 snliParZModelFineTune = "../trained_model_snli_par_z_fineTune"
 snliSeqZModel = "../trained_model_snli_seq_z"
 snliSeqZModelFineTune = "../trained_model_snli_seq_z_fineTune"
 snliAugZModel = "../trained_model_snli_aug_z"
 snliAugZModelFineTune = "../trained_model_snli_aug_z_fineTune"
+
+
 # path to model that were fixed
 fixedModelPath = snliParZModelFineTune
 useFixedModel = True
 
+
 def readGDNLI():
     from datasets import load_dataset
-    dts = load_dataset("json",data_files=snliParZ)
+    dts = load_dataset("json", data_files=snliParZ)
     return dts
 
 
-def main():
+@dataclass
+class HansEvalResul:
+    modelPath: str | None = None
+    hansBiasType: str | None = None
+    hansGoldLabel: int | None = None
+    hansSplit: str = "validation"
+    accuracy: float = 0.0
+
+
+def main(
+        modelPath: str | None = None,
+        hansBiasType: str | None = None,
+        hansGoldLabel: int | None = None,
+        hansSplit: str = "validation",
+):
+    rs = HansEvalResul(modelPath, hansBiasType, hansGoldLabel, hansSplit, 0.0)
     argp = HfArgumentParser(TrainingArguments)
     # The HfArgumentParser object collects command-line arguments into an object (and provides default values for unspecified arguments).
     # In particular, TrainingArguments has several keys that you'll need/want to specify (when you call run.py from the command line):
@@ -99,11 +121,7 @@ def main():
 
     training_args, args = argp.parse_args_into_dataclasses()
     if useGDNLI_SNLI:
-        if use_All_GDNLI:
-            pass
-        else:
-            args.dataset = gdnliDatasetPath
-
+        args.dataset = gdnliDatasetPath
 
     # Dataset selection
     # IMPORTANT: this code path allows you to load custom datasets different from the standard SQuAD or SNLI ones.
@@ -119,13 +137,6 @@ def main():
         # so if we want to use a jsonl file for evaluation we need to get the "train" split
         # from the loaded dataset
         eval_split = 'train'
-
-        if use_All_GDNLI:
-            parZ = datasets.load_dataset('json', data_files=snliParZ)
-            seqZ = datasets.load_dataset('json', data_files=snliSeqZ)
-            augZ = datasets.load_dataset('json', data_files=snliAugZ)
-            dataset = datasets.concatenate_datasets([parZ,seqZ,augZ])
-
     else:
         default_datasets = {'qa': ('squad',), 'nli': ('snli',)}
         dataset_id = tuple(args.dataset.split(':')) if args.dataset is not None else \
@@ -138,21 +149,18 @@ def main():
     if useHans:
         # hansDataSet = datasets.load_dataset("hans", split=datasets.ReadInstruction("train", from_=0, to=5, unit="abs"))
         hansDataSet = datasets.load_dataset("hans")
-        if hansBiasTypeFilter is not None:
-            hansDataSet = hansDataSet.filter(lambda sample: sample['heuristic'] == hansBiasTypeFilter)
-            if hansLabel is not None:
-                hansDataSet = hansDataSet.filter(lambda sample: sample['label'] == hansLabel)
+        if hansBiasType is not None:
+            hansDataSet = hansDataSet.filter(lambda sample: sample['heuristic'] == hansBiasType)
+            if hansGoldLabel is not None:
+                hansDataSet = hansDataSet.filter(lambda sample: sample['label'] == hansGoldLabel)
         dataset = hansDataSet
         print(">>> load HANS dataset")
     if useFixedModel:
-        print(f">>> use fixed model: {fixedModelPath}")
-        args.model = fixedModelPath
+        print(f">>> use fixed model: {modelPath}")
+        args.model = modelPath
 
     # NLI models need to have the output label count specified (label 0 is "entailed", 1 is "neutral", and 2 is "contradiction")
-    numLabel = 3
-    if useHans:
-        numLabel = 2
-    task_kwargs = {'num_labels': numLabel} if args.task == 'nli' else {}
+    task_kwargs = {'num_labels': 3} if args.task == 'nli' else {}
 
     # Here we select the right model fine-tuning head
     model_classes = {'qa': AutoModelForQuestionAnswering,
@@ -177,7 +185,7 @@ def main():
     if dataset_id == ('snli',):
         # remove SNLI examples with no label
         dataset = dataset.filter(lambda ex: ex['label'] != -1)
-    
+
     train_dataset = None
     eval_dataset = None
     train_dataset_featurized = None
@@ -199,8 +207,7 @@ def main():
         if runEvaluationOnTestSet:
             eval_split = "test"
         if useHans:
-            eval_split = "train"
-            eval_split = "validation"
+            eval_split = hansSplit
             print(f">> run evaluation on HANS split: {eval_split}")
         eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
@@ -228,11 +235,22 @@ def main():
             predictions=eval_preds.predictions, references=eval_preds.label_ids)
     elif args.task == 'nli':
         compute_metrics = compute_accuracy
-    
+
+    if useHans:
+        def computeMetricForHans(eval_preds):
+            import numpy as np
+            arr = np.argmax(eval_preds.predictions, axis=1)
+            arr[arr == 2] = 1
+
+            return {
+                'accuracy': (arr == eval_preds.label_ids).astype(np.float32).mean().item()
+            }
+        compute_metrics = computeMetricForHans
 
     # This function wraps the compute_metrics function, storing the model's predictions
     # so that they can be dumped along with the computed metrics
     eval_predictions = None
+
     def compute_metrics_and_store_predictions(eval_preds):
         nonlocal eval_predictions
         eval_predictions = eval_preds
@@ -277,6 +295,7 @@ def main():
 
         print('Evaluation results:')
         print(results)
+        rs.accuracy = results["eval_accuracy"]
 
         os.makedirs(training_args.output_dir, exist_ok=True)
 
@@ -298,7 +317,34 @@ def main():
                     example_with_prediction['predicted_label'] = int(eval_predictions.predictions[i].argmax())
                     f.write(json.dumps(example_with_prediction))
                     f.write('\n')
+    return rs
 
 
 if __name__ == "__main__":
-    main()
+    modelPathList = [
+        baseLineModel,
+        snliParZModel,
+        snliParZModelFineTune,
+        snliSeqZModel,
+        snliSeqZModelFineTune,
+        snliAugZModel,
+        snliAugZModelFineTune,
+    ]
+    results = []
+    for mp in modelPathList:
+        rs = main(mp,None,None,)
+        results.append(rs)
+
+    with open("testResult_overall.json","w") as file:
+        jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
+        file.write(jsonStr)
+
+    #
+    # results = []
+    # for mp in modelPathList:
+    #     rs = main(mp,None,None,)
+    #     results.append(rs)
+    #
+    # with open("hansResult_overall.json","w") as file:
+    #     jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
+    #     file.write(jsonStr)
