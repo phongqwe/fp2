@@ -212,7 +212,10 @@ def main(
         if useHans:
             eval_split = hansSplit
             print(f">> run evaluation on HANS split: {eval_split}")
-        eval_dataset = dataset[eval_split]
+        if eval_split == "all":
+            eval_dataset = datasets.concatenate_datasets([dataset["train"], dataset["validation"]])
+        else:
+            eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         eval_dataset_featurized = eval_dataset.map(
@@ -330,30 +333,31 @@ def main(
 if __name__ == "__main__":
     modelPathList = [
         baseLineModel,
-        snliParZModel,
-        snliParZModelFineTune,
-        snliSeqZModel,
-        snliSeqZModelFineTune,
-        snliAugZModel,
-        snliAugZModelFineTune,
+        # snliParZModel,
+        # snliParZModelFineTune,
+        # snliSeqZModel,
+        # snliSeqZModelFineTune,
+        # snliAugZModel,
+        # snliAugZModelFineTune,
     ]
     hansBiasTypeList = [
         hansOverlap,
-        hansSubsequence,
-        hansConstituent
+        # hansSubsequence,
+        # hansConstituent
     ]
     hansGoldLabelList = [
-        1,
-        0
+        0,
+        # 1,
     ]
     results = []
+    hansSplit = "all" #all, validation, train
     for mp in modelPathList:
         for bt in hansBiasTypeList:
             for label in hansGoldLabelList:
-                rs = main(mp,bt,label,)
+                rs = main(mp,bt,label,hansSplit)
                 results.append(rs)
 
-    with open("hansResult.json","w") as file:
+    with open(f"hansResult_{hansSplit}.json","w") as file:
         jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
         file.write(jsonStr)
 
@@ -363,6 +367,6 @@ if __name__ == "__main__":
     #     rs = main(mp,None,None,)
     #     results.append(rs)
     #
-    # with open("hansResult_overall.json","w") as file:
+    # with open("hansResult_overall_validation.json","w") as file:
     #     jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
     #     file.write(jsonStr)

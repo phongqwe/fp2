@@ -7,7 +7,9 @@
 
 
 % ready for submission
-\usepackage{neurips_2023}
+\usepackage[final]{neurips_2023}
+\usepackage{amssymb}
+\usepackage{float}
 
 
 % to compile a preprint version, e.g., for submission to arXiv, add add the
@@ -34,7 +36,7 @@
 \usepackage{xcolor}         % colors
 
 
-\title{Formatting Instructions For NeurIPS 2023}
+\title{Mitigating dataset atifact using ....}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -47,34 +49,9 @@
 
 
 \author{%
-  David S.~Hippocampus\thanks{Use footnote for providing further information
-    about author (webpage, alternative address)---\emph{not} for acknowledging
-    funding agencies.} \\
-  Department of Computer Science\\
-  Cranberry-Lemon University\\
-  Pittsburgh, PA 15213 \\
-  \texttt{hippo@cs.cranberry-lemon.edu} \\
-  % examples of more authors
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \AND
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
-  % \And
-  % Coauthor \\
-  % Affiliation \\
-  % Address \\
-  % \texttt{email} \\
+  Pham The Phong \\
+  ptp392\\
+   \\
 }
 
 
@@ -85,402 +62,373 @@
 
 
 \begin{abstract}
-  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on
-  both the left- and right-hand margins. Use 10~point type, with a vertical
-  spacing (leading) of 11~points.  The word \textbf{Abstract} must be centered,
-  bold, and in point size 12. Two line spaces precede the abstract. The abstract
-  must be limited to one paragraph.
+
+
+ Models trained for natural language inference can develop spurious correlations between hypotheses and premises.
+ These are called dataset artifacts.
+  This report details the examination and mitigation of a limited set of dataset artifacts in a natural-language-inference model by retraining and fine-tuning the model on synthetic debiased datasets.
+ We use the ELECTRA-small model, train it on the Stanford Natural Language Inference (SNLI) Corpus, and evaluate it using the Heuristic Analysis for NLI Systems (HANS) dataset
+ Initially, we train the model on SNLI and establish baseline statistics by testing the baseline model against HANS.
+  We then retrain the model from scratch and simultaneously fine-tune the trained baseline model on three synthetic datasets based on SNLI, resulting in six separate models.
+  Finally, we perform analysis on the new models, and compare their statistics with the baseline to see if there is any improvement.
+  All six models show significantly better performance on HANS, indicating reduced biases compared to the baseline model.
+  However, only one outperforms the baseline model on the SNLI test set, while the rest perform worse.
+
 \end{abstract}
 
 
-\section{Submission of papers to NeurIPS 2023}
+\section{Introduction}
+Models for natural language inference may contain dataset artifact.
+They may assume a relationship (entailment, contrast, or neutral) between a hypothesis and premise base on unrelated factors such as the amount of overlapping words.
+In this report, we use the Heuristic Analysis for NLI Systems (HANS) dataset on model ELECTRA-small trained on the Stanford Natural Language Inference (SNLI) Corpus to check for three type of baises (\hyperref[ref1]{McCoy et al.,2019}), as in \hyperref[table1]{Table 1}. Then we will try to de-bias the model by training and finetuning it on existing debiased dataset generated base on SNLI (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
+
+
+
+\begin{table}[h]
+    \label{table1}
+    \caption{Three types of biases}
+\centering
+\begin{tabular}{p{3cm} p{5cm} p{5cm}}
+\hline
+\textbf{Bias}    & \textbf{Definition}    & \textbf{Example}    \\ \hline
+Lexical overlap  & A premise entails all hypotheses
+constructed from words in the premise  & "\textbf{the dog is running on the road}" wrongly entails "\textbf{the dog is} not \textbf{running on the road}"  \\
+Subsequence  & A premise entails all of its contiguous subsequences.  & "I see don't see \textbf{the squirrels running}" wrongly entails "\textbf{the squirrls running}" \\
+Constituent  & Assume that a premise entails all complete subtrees in its parse tree. & "if \textbf{the dog is hungry}, it eats" wrongly entails "\textbf{the dog is hungry}"  \\ \hline
+\end{tabular}
 
-
-Please read the instructions below carefully and follow them faithfully. \textbf{Important:} This year the checklist will be submitted separately from the main paper in OpenReview, please review it well ahead of the submission deadline: \url{https://neurips.cc/public/guides/PaperChecklist}.
-
-
-\subsection{Style}
-
-
-Papers to be submitted to NeurIPS 2023 must be prepared according to the
-instructions presented here. Papers may only be up to {\bf nine} pages long,
-including figures. Additional pages \emph{containing only acknowledgments and
-references} are allowed. Papers that exceed the page limit will not be
-reviewed, or in any other way considered for presentation at the conference.
-
-
-The margins in 2023 are the same as those in previous years.
-
-
-Authors are required to use the NeurIPS \LaTeX{} style files obtainable at the
-NeurIPS website as indicated below. Please make sure you use the current files
-and not previous versions. Tweaking the style files may be grounds for
-rejection.
-
-
-\subsection{Retrieval of style files}
-
-
-The style files for NeurIPS and other conference information are available on
-the website at
-\begin{center}
-  \url{http://www.neurips.cc/}
-\end{center}
-The file \verb+neurips_2023.pdf+ contains these instructions and illustrates the
-various formatting requirements your NeurIPS paper must satisfy.
-
-
-The only supported style file for NeurIPS 2023 is \verb+neurips_2023.sty+,
-rewritten for \LaTeXe{}.  \textbf{Previous style files for \LaTeX{} 2.09,
-  Microsoft Word, and RTF are no longer supported!}
-
-
-The \LaTeX{} style file contains three optional arguments: \verb+final+, which
-creates a camera-ready copy, \verb+preprint+, which creates a preprint for
-submission to, e.g., arXiv, and \verb+nonatbib+, which will not load the
-\verb+natbib+ package for you in case of package clash.
-
-
-\paragraph{Preprint option}
-If you wish to post a preprint of your work online, e.g., on arXiv, using the
-NeurIPS style, please use the \verb+preprint+ option. This will create a
-nonanonymized version of your work with the text ``Preprint. Work in progress.''
-in the footer. This version may be distributed as you see fit, as long as you do not say which conference it was submitted to. Please \textbf{do
-  not} use the \verb+final+ option, which should \textbf{only} be used for
-papers accepted to NeurIPS. 
-
-
-At submission time, please omit the \verb+final+ and \verb+preprint+
-options. This will anonymize your submission and add line numbers to aid
-review. Please do \emph{not} refer to these line numbers in your paper as they
-will be removed during generation of camera-ready copies.
-
-
-The file \verb+neurips_2023.tex+ may be used as a ``shell'' for writing your
-paper. All you have to do is replace the author, title, abstract, and text of
-the paper with your own.
-
-
-The formatting instructions contained in these style files are summarized in
-Sections \ref{gen_inst}, \ref{headings}, and \ref{others} below.
-
-
-\section{General formatting instructions}
-\label{gen_inst}
-
-
-The text must be confined within a rectangle 5.5~inches (33~picas) wide and
-9~inches (54~picas) long. The left margin is 1.5~inch (9~picas).  Use 10~point
-type with a vertical spacing (leading) of 11~points.  Times New Roman is the
-preferred typeface throughout, and will be selected for you by default.
-Paragraphs are separated by \nicefrac{1}{2}~line space (5.5 points), with no
-indentation.
-
-
-The paper title should be 17~point, initial caps/lower case, bold, centered
-between two horizontal rules. The top rule should be 4~points thick and the
-bottom rule should be 1~point thick. Allow \nicefrac{1}{4}~inch space above and
-below the title to rules. All pages should start at 1~inch (6~picas) from the
-top of the page.
-
-
-For the final version, authors' names are set in boldface, and each name is
-centered above the corresponding address. The lead author's name is to be listed
-first (left-most), and the co-authors' names (if different address) are set to
-follow. If there is only one co-author, list both author and co-author side by
-side.
-
-
-Please pay special attention to the instructions in Section \ref{others}
-regarding figures, tables, acknowledgments, and references.
-
-
-\section{Headings: first level}
-\label{headings}
-
-
-All headings should be lower case (except for first word and proper nouns),
-flush left, and bold.
-
-
-First-level headings should be in 12-point type.
-
-
-\subsection{Headings: second level}
-
-
-Second-level headings should be in 10-point type.
-
-
-\subsubsection{Headings: third level}
-
-
-Third-level headings should be in 10-point type.
-
-
-\paragraph{Paragraphs}
-
-
-There is also a \verb+\paragraph+ command available, which sets the heading in
-bold, flush left, and inline with the text, with the heading followed by 1\,em
-of space.
-
-
-\section{Citations, figures, tables, references}
-\label{others}
-
-
-These instructions apply to everyone.
-
-
-\subsection{Citations within the text}
-
-
-The \verb+natbib+ package will be loaded for you by default.  Citations may be
-author/year or numeric, as long as you maintain internal consistency.  As to the
-format of the references themselves, any style is acceptable as long as it is
-used consistently.
-
-
-The documentation for \verb+natbib+ may be found at
-\begin{center}
-  \url{http://mirrors.ctan.org/macros/latex/contrib/natbib/natnotes.pdf}
-\end{center}
-Of note is the command \verb+\citet+, which produces citations appropriate for
-use in inline text.  For example,
-\begin{verbatim}
-   \citet{hasselmo} investigated\dots
-\end{verbatim}
-produces
-\begin{quote}
-  Hasselmo, et al.\ (1995) investigated\dots
-\end{quote}
-
-
-If you wish to load the \verb+natbib+ package with options, you may add the
-following before loading the \verb+neurips_2023+ package:
-\begin{verbatim}
-   \PassOptionsToPackage{options}{natbib}
-\end{verbatim}
-
-
-If \verb+natbib+ clashes with another package you load, you can add the optional
-argument \verb+nonatbib+ when loading the style file:
-\begin{verbatim}
-   \usepackage[nonatbib]{neurips_2023}
-\end{verbatim}
-
-
-As submission is double blind, refer to your own published work in the third
-person. That is, use ``In the previous work of Jones et al.\ [4],'' not ``In our
-previous work [4].'' If you cite your other papers that are not widely available
-(e.g., a journal paper under review), use anonymous author names in the
-citation, e.g., an author of the form ``A.\ Anonymous'' and include a copy of the anonymized paper in the supplementary material.
-
-
-\subsection{Footnotes}
-
-
-Footnotes should be used sparingly.  If you do require a footnote, indicate
-footnotes with a number\footnote{Sample of the first footnote.} in the
-text. Place the footnotes at the bottom of the page on which they appear.
-Precede the footnote with a horizontal rule of 2~inches (12~picas).
-
-
-Note that footnotes are properly typeset \emph{after} punctuation
-marks.\footnote{As in this example.}
-
-
-\subsection{Figures}
-
-
-\begin{figure}
-  \centering
-  \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \caption{Sample figure caption.}
-\end{figure}
-
-
-All artwork must be neat, clean, and legible. Lines should be dark enough for
-purposes of reproduction. The figure number and caption always appear after the
-figure. Place one line space before the figure caption and one line space after
-the figure. The figure caption should be lower case (except for first word and
-proper nouns); figures are numbered consecutively.
-
-
-You may use color figures.  However, it is best for the figure captions and the
-paper body to be legible if the paper is printed in either black/white or in
-color.
-
-
-\subsection{Tables}
-
-
-All tables must be centered, neat, clean and legible.  The table number and
-title always appear before the table.  See Table~\ref{sample-table}.
-
-
-Place one line space before the table title, one line space after the
-table title, and one line space after the table. The table title must
-be lower case (except for first word and proper nouns); tables are
-numbered consecutively.
-
-
-Note that publication-quality tables \emph{do not contain vertical rules.} We
-strongly suggest the use of the \verb+booktabs+ package, which allows for
-typesetting high-quality, professional tables:
-\begin{center}
-  \url{https://www.ctan.org/pkg/booktabs}
-\end{center}
-This package was used to typeset Table~\ref{sample-table}.
-
-
-\begin{table}
-  \caption{Sample table title}
-  \label{sample-table}
-  \centering
-  \begin{tabular}{lll}
-    \toprule
-    \multicolumn{2}{c}{Part}                   \\
-    \cmidrule(r){1-2}
-    Name     & Description     & Size ($\mu$m) \\
-    \midrule
-    Dendrite & Input terminal  & $\sim$100     \\
-    Axon     & Output terminal & $\sim$10      \\
-    Soma     & Cell body       & up to $10^6$  \\
-    \bottomrule
-  \end{tabular}
 \end{table}
 
-\subsection{Math}
-Note that display math in bare TeX commands will not create correct line numbers for submission. Please use LaTeX (or AMSTeX) commands for unnumbered display math. (You really shouldn't be using \$\$ anyway; see \url{https://tex.stackexchange.com/questions/503/why-is-preferable-to} and \url{https://tex.stackexchange.com/questions/40492/what-are-the-differences-between-align-equation-and-displaymath} for more information.)
-
-\subsection{Final instructions}
-
-Do not change any aspects of the formatting parameters in the style files.  In
-particular, do not modify the width or length of the rectangle the text should
-fit into, and do not change font sizes (except perhaps in the
-\textbf{References} section; see below). Please note that pages should be
-numbered.
-
-
-\section{Preparing PDF files}
-
-
-Please prepare submission files with paper size ``US Letter,'' and not, for
-example, ``A4.''
-
-
-Fonts were the main cause of problems in the past years. Your PDF file must only
-contain Type 1 or Embedded TrueType fonts. Here are a few instructions to
-achieve this.
-
-
+\subsection{Approach}
+Our approach is as follows:
 \begin{itemize}
-
-
-\item You should directly generate PDF files using \verb+pdflatex+.
-
-
-\item You can check which fonts a PDF files uses.  In Acrobat Reader, select the
-  menu Files$>$Document Properties$>$Fonts and select Show All Fonts. You can
-  also use the program \verb+pdffonts+ which comes with \verb+xpdf+ and is
-  available out-of-the-box on most Linux machines.
-
-
-\item \verb+xfig+ "patterned" shapes are implemented with bitmap fonts.  Use
-  "solid" shapes instead.
-
-
-\item The \verb+\bbold+ package almost always uses bitmap fonts.  You should use
-  the equivalent AMS Fonts:
-\begin{verbatim}
-   \usepackage{amsfonts}
-\end{verbatim}
-followed by, e.g., \verb+\mathbb{R}+, \verb+\mathbb{N}+, or \verb+\mathbb{C}+
-for $\mathbb{R}$, $\mathbb{N}$ or $\mathbb{C}$.  You can also use the following
-workaround for reals, natural and complex:
-\begin{verbatim}
-   \newcommand{\RR}{I\!\!R} %real numbers
-   \newcommand{\Nat}{I\!\!N} %natural numbers
-   \newcommand{\CC}{I\!\!\!\!C} %complex numbers
-\end{verbatim}
-Note that \verb+amsfonts+ is automatically loaded by the \verb+amssymb+ package.
-
-
+  \item First we train ELECTRA-small on SNLI. The trained model is called \textbf{baseline model}.
+  \item Then we run the baseline model against the test set of SNLI and HANS to harvest baseline statistic which include:
+    \begin{itemize}
+      \item overall accuracy on test set of SNLI
+      \item overall accuracy on test set of HANS
+      \item breakdown accuracy on test set of SNLI by type of bias and by label
+      \item breakdown accuracy on test set of HANS by type of bias and by label
+    \end{itemize}
+  \item Then we train 3 new models and finetune the baseline model using the following 3 synthetic dataset created by \hyperref[ref2]{Yuxiang Wu et al.,2022}, this will result in 6 new models:
+    \begin{itemize}
+      \item SNLI Par-Z
+      \item SNLI Seq-A
+      \item SNLI Aug-Z
+    \end{itemize}
+  \item Finally, we run the 6 new models on SNLI and HANS to harvest new statistics and compare them with the baseline statistic to form our conclusion.
 \end{itemize}
 
+\subsection{HANS dataset}
+The HANS dataset is a dataset of 60000 samples split evenly between a \textbf{train} subset and a \textbf{validation} subset.
+Each sample is labeled either \textbf{entailment} (0) or \textbf{not entailment} (1).
+In this report, we use both the train and validation subset for our testing purpose.
 
-If your file contains type 3 fonts or non embedded TrueType fonts, we will ask
-you to fix it.
+\subsection{Synthetic datasets}
+The synthetic datasets used in this report are generated by combining the original SNLI with a pure synthetic SNLI, and apply a filter to remove samples that contains spurious correlations measured in z-statistic. (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
 
+Let $\mathcal{D}$ be the original SNLI, and $\mathcal{D}_{S}$ be the synthetic SNLI.
+\begin{itemize}
+  \item \textbf{SNLI Par-Z} ({\it$\mathcal{Z}(\mathcal{D}) \cup \mathcal{Z}(\mathcal{D}_{S})$}) is created by conduct z-filter on $\mathcal{D}$ and $\mathcal{D}_{S}$, and merge them (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
+  \item \textbf{SNLI Seq-A} ({\it$\mathcal{Z}(\mathcal{D}_{S}|\mathcal{Z}(\mathcal{D}))$}) is created by conduct z-filter on $\mathcal{D}$, then conduct conditional z-filter on $\mathcal{D}_{S}$ with $\mathcal{Z}(\mathcal{D})$ as seed (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
+  \item \textbf{SNLI Aug-Z} ({\it $\mathcal{Z}(\mathcal{D}_{S}|\mathcal{D})$}) is by conduct conditional z-filter on  $\mathcal{D}_{S}$ using $\mathcal{D}$ as seed (\hyperref[ref2]{Yuxiang Wu et al.,2022})
+\end{itemize}
 
-\subsection{Margins in \LaTeX{}}
+\section{Baseline analysis}
+\subsection{Analysis on SNLI test set and HANS}
+Running the baseline model on SNLI and HANS produce the overall accuracy (\hyperref[table2]{Table 2}).
 
+\begin{table}[h]
+    \label{table2}
+    \caption{Baseline model overall accuracies}
+    \centering
+    \begin{tabular}{l l}
+    \hline
+    \textbf{Dataset}    & \textbf{Accuracy}    \\ \hline
+    SNLI test set  & 88.884\%        \\
+    HANS  & 50.715\%        \\ \hline
+    \end{tabular}
 
-Most of the margin problems come from figures positioned by hand using
-\verb+\special+ or other commands. We suggest using the command
-\verb+\includegraphics+ from the \verb+graphicx+ package. Always specify the
-figure width as a multiple of the line width as in the example below:
-\begin{verbatim}
-   \usepackage[pdftex]{graphicx} ...
-   \includegraphics[width=0.8\linewidth]{myfile.pdf}
-\end{verbatim}
-See Section 4.4 in the graphics bundle documentation
-(\url{http://mirrors.ctan.org/macros/latex/required/graphics/grfguide.pdf})
-
-
-A number of width problems arise when \LaTeX{} cannot properly hyphenate a
-line. Please give LaTeX hyphenation hints using the \verb+\-+ command when
-necessary.
-
-
-\begin{ack}
-Use unnumbered first level headings for the acknowledgments. All acknowledgments
-go at the end of the paper before the list of references. Moreover, you are required to declare
-funding (financial activities supporting the submitted work) and competing interests (related financial activities outside the submitted work).
-More information about this disclosure can be found at: \url{https://neurips.cc/Conferences/2023/PaperInformation/FundingDisclosure}.
-
-
-Do {\bf not} include this section in the anonymized submission, only in the final paper. You can use the \texttt{ack} environment provided in the style file to autmoatically hide this section in the anonymized submission.
-\end{ack}
+\end{table}
 
 
+The accuracy on both HANS train set and validation set is 50.715\% which is significantly lower than the accuracy 88.88\% from SNLI test set.
+This indicates that the baseline model is susceptible to the three type of bias describe above.
 
-\section{Supplementary Material}
+From SNLI test set, we extract three subsets that contain only overlapping (with Jaccard score > 0.5), subsequence, and constituent samples.
+The item count of each subset is in \hyperref[table3]{Table 3}.
 
-Authors may wish to optionally include extra information (complete proofs, additional experiments and plots) in the appendix. All such materials should be part of the supplemental material (submitted separately) and should NOT be included in the main submission.
+
+\begin{table}[H]
+    \caption{Item count of subsets by bias type and gold label in SNLI test set}
+\label{table3}
+\centering
+\begin{tabular}{l l l l}
+\hline
+\textbf{}            & \textbf{Entail} & \textbf{Contrast} & \textbf{Neutral} \\ \hline
+\textbf{Overlap}     & 345    & 175      & 100    \\
+\textbf{Constituent} & 28     & 0        & 0      \\
+\textbf{Subsequence} & 0      & 0        & 0      \\ \hline
+\end{tabular}
+
+\end{table}
+
+This breakdown shows that the SNLI test set is highly skewed and contains a small number of samples that belong to one of the 3 biases.
+It does not contain any subsequence sample, and all of the constituent samples are labeled entailment.
+Overlap subset is larger than the others, but is skewed toward entailment.
+Therefore, SNLI test set can be only used to measure the overall performance and performance on samples that do not belong to one of the three biases.
+However we still run the baseline model each of these subset to get the accuracy on these subsets, in \hyperref[table4]{Table 4}.
+
+\begin{table}[h]
+    \caption{Accuracy (\%) per subset (by bias type and gold label) of SNLI test set}
+    \label{table4}
+\centering
+\begin{tabular}{l l l l}
+\hline
+\textbf{} & \textbf{Entail} & \textbf{Contrast} & \textbf{Neutral} \\ \hline
+\textbf{Overlap}     & 92.17         & 17.71           & 3.00           \\
+\textbf{Constituent} & 85.71         & N/A               & N/A              \\
+\textbf{Subsequence} & N/A             & N/A               & N/A              \\ \hline
+\end{tabular}
+
+
+\end{table}
+
+
+We perform similar breakdown on HANS for all three type of biases and 2 gold label(entailment and non-entailment) (\hyperref[table5]{Table 5} and \hyperref[table6]{Table 6}).
+The baseline model correctly classifies 96-100\% of entail sample and at the same time it incorrectly classify nearly all the non-entail sample.
+This means the model is equally susceptible to all three type of bias.
+
+\begin{table}[H]
+    \caption{Item count of subsets by bias type and gold label in HANS}
+\label{table5}
+\centering
+\begin{tabular}{l l l l}
+\hline
+\textbf{}            & \textbf{Entail} & \textbf{Non-entail} \\ \hline
+\textbf{Overlap}     & 10000    & 10000         \\
+\textbf{Constituent} & 10000     & 10000              \\
+\textbf{Subsequence} & 10000      & 10000             \\ \hline
+\end{tabular}
+
+\end{table}
+\begin{table}[h]
+    \label{table6}
+    \caption{classify result (\%) per subset (by bias type and gold label) in HANS}
+\centering
+\begin{tabular}{l l l}
+\hline
+\textbf{} & \textbf{Entailment} & \textbf{Non-entailment} \\ \hline
+\textbf{Overlap} & 96.640 & 6.990 \\
+\textbf{Subsequence} & 99.560 & 0.660 \\
+\textbf{Constituent} & 100.000 & 0.440 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Analysis on SNLI train set}
+We make another breakdown on SNLI train set in \hyperref[table6]{Table 6} to see if train data set plays any role in the bias of the baseline model.
+
+\begin{table}[h]
+    \label{table7}
+    \caption{Breakdown of item count by bias type and gold label}
+\centering
+\begin{tabular}{l l l l}
+\hline
+\textbf{} & \textbf{Entailment} & \textbf{Contrast} & \textbf{Neutral} \\ \hline
+\textbf{Overlap}     & 18938 & 11801 & 7410 \\
+\textbf{Subsequence} & 274   & 26    & 20   \\
+\textbf{Constituent} & 1054  & 36    & 13   \\ \hline
+\end{tabular}
+
+\end{table}
+
+\hyperref[table7]{Table 7} shows that compare to \textbf{contrast} and \textbf{neutral}, \textbf{entailment} has:
+\begin{itemize}
+    \item The number of overlap is 1.6 and 2.5 times higher respectively.
+    \item The number of subsequence is 10 times higher.
+    \item The number of constituent is 29 and 81 times higher respectively.
+\end{itemize}
+ This means given a sample that is either overlap, subsequence, or constituent, it is more likely to be classified as \textbf{entailment} than \textbf{contrast} or \textbf{neutral}.
+In other words, the train dataset is skewed toward \textbf{entailment} for samples that fall into one of the three biases.
+
+\section{Mitigating}
+
+To mitigate the artifact in the baseline model, we train the model on three debiased dataset generated from SNLI (SNLI Par-Z, SNLI Seq-Z, and SNLI Aug-Z), at the same time, we finetune the baseline model on said datasets.
+This results in 6 new models.
+For each, we compute the same statistic using the new models on the HANS and SNLI test set.
+
+\subsection{Overall accuracy}
+
+\begin{table}[H]
+\label{table8}
+\caption{Model accuracy on SNLI test set}
+\centering
+\begin{tabular}{l l}
+\hline
+\textbf{Model}                   & \textbf{Accuracy (\%)} \\ \hline
+\textbf{Baseline}                & 88.884                 \\
+\textbf{Trained on SNLI Par-Z}   & 85.596                 \\
+\textbf{Finetuned on SNLI Par-Z} & 88.101                 \\
+\textbf{Trained on SNLI Seq-Z}   & 85.719                 \\
+\textbf{Finetuned on SNLI Seq-Z} & 88.314                 \\
+\textbf{Trained on SNLI Z-Aug}   & 88.569                 \\
+\textbf{Finetuned on SNLI Z-Aug} & \textbf{89.057}                 \\ \hline
+\end{tabular}
+\end{table}
+
+From \hyperref[table8]{Table 8}, of the 6 new model, only the model finetuned on SNLI Z-Aug perform slightly better than the baseline model.
+The finetuned models on SNLI Par-Z and SNLI Seq-Z are slightly worse than the baseline, while the two trained from scratch on those datasets perform significantly worse with about 3\% less than the baseline.
+
+\begin{table}[H]
+    \label{table9}
+    \caption{Model accuracy on HANS}
+\centering
+\begin{tabular}{l l}
+\hline
+\textbf{Model}                   & \textbf{Accuracy (\%)} \\ \hline
+\textbf{Baseline}                & 50.715                 \\
+\textbf{Trained on SNLI Par-Z}   & 58.703                 \\
+\textbf{Finetuned on SNLI Par-Z} & 57.947                 \\
+\textbf{Trained on SNLI Seq-Z}   & 56.782                 \\
+\textbf{Finetuned on SNLI Seq-Z} & 58.433                 \\
+\textbf{Trained on SNLI Z-Aug}   & 59.917                 \\
+\textbf{Finetuned on SNLI Z-Aug} & 55.817                 \\ \hline
+\end{tabular}
+
+\end{table}
+From \hyperref[table9]{Table 9}, all the new models perform better than the base model by 5-9\% on HANS
+\subsection{Breakdown accuracy and individual improvements}
+
+A further breaking down HANS result by bias type and label (\hyperref[table10]{Table 10}) show that all 6 new models perform better on all non-entailment subset and slightly worse on entailment.
+The large improvement is on classifying non-entailment for overlapping sample.
+The smallest improvement is 31.49\% while the largest is 52.97\%
+For other subset, the improvement is significantly less ranging from 19\% to as low as around 2\%.
+This means the new models are much better at \textbf{not} mistaking overlapping samples as entailment, but not that much (still better, but not much) for other type of biases.
+
+\section{Discussion}
+\subsection{Deviation between debias dataset}
+There are signification differences between the result of model trained on debiased dataset and model finetunes on the same dataset.
+There are so significant differences between models train on different dataset, or between models finetuned on different dataset.
+
+For the same data set, a trained model perform significantly better than a finetuned model in term of 
+
+
+%\begin{table}[]
+%     \label{table10}
+%    \caption{Break down result on HANS by bias type and label}
+%
+%\begin{tabular}{lllrrl}
+%\textbf{model}                   & \textbf{bias type}   & \textbf{label}      & \multicolumn{1}{l}{\textbf{accuracy}} & \multicolumn{1}{l}{\textbf{Compare to baseline}} & \textbf{better or not} \\ \hline
+%baseline                & overlap     & non-entail & 6.990\%                      & 0.000\%                                 & same          \\
+%                        &             & entail     & 96.640\%                     & 0.000\%                                 & same          \\
+%                        & subsequence & non-entail & 0.440\%                      & 0.000\%                                 & same          \\
+%                        &             & entail     & 100.000\%                    & 0.000\%                                 & same          \\
+%                        & constituent & non-entail & 0.660\%                      & 0.000\%                                 & same          \\
+%                        &             & entail     & 99.560\%                     & 0.000\%                                 & same          \\
+%trained on SNLI Par-Z   & overlap     & non-entail & 48.280\%                     & 41.290\%                                & better        \\
+%                        &             & entail     & 85.980\%                     & -10.660\%                               & worse         \\
+%                        & subsequence & non-entail & 13.510\%                     & 13.070\%                                & better        \\
+%                        &             & entail     & 97.640\%                     & -2.360\%                                & worse         \\
+%                        & constituent & non-entail & 19.720\%                     & 19.060\%                                & better        \\
+%                        &             & entail     & 87.090\%                     & -12.470\%                               & worse         \\
+%finetuned on SNLI Par-Z & overlap     & non-entail & 53.590\%                     & 46.600\%                                & better        \\
+%                        &             & entail     & 89.160\%                     & -7.480\%                                & worse         \\
+%                        & subsequence & non-entail & 4.870\%                      & 4.430\%                                 & better        \\
+%                        &             & entail     & 98.750\%                     & -1.250\%                                & worse         \\
+%                        & constituent & non-entail & 4.920\%                      & 4.260\%                                 & better        \\
+%                        &             & entail     & 96.390\%                     & -3.170\%                                & worse         \\
+%trained on SNLI Seq-Z   & overlap     & non-entail & 38.480\%                     & 31.490\%                                & better        \\
+%                        &             & entail     & 94.240\%                     & -2.400\%                                & worse         \\
+%                        & subsequence & non-entail & 5.330\%                      & 4.890\%                                 & better        \\
+%                        &             & entail     & 98.650\%                     & -1.350\%                                & worse         \\
+%                        & constituent & non-entail & 9.060\%                      & 8.400\%                                 & better        \\
+%                        &             & entail     & 94.930\%                     & -4.630\%                                & worse         \\
+%finetuned on SNLI Seq-Z & overlap     & non-entail & 56.930\%                     & 49.940\%                                & better        \\
+%                        &             & entail     & 89.720\%                     & -6.920\%                                & worse         \\
+%                        & subsequence & non-entail & 4.200\%                      & 3.760\%                                 & better        \\
+%                        &             & entail     & 99.460\%                     & -0.540\%                                & worse         \\
+%                        & constituent & non-entail & 3.430\%                      & 2.770\%                                 & better        \\
+%                        &             & entail     & 96.860\%                     & -2.700\%                                & worse         \\
+%trained on SNLI Z-Aug   & overlap     & non-entail & 59.960\%                     & 52.970\%                                & better        \\
+%                        &             & entail     & 90.180\%                     & -6.460\%                                & worse         \\
+%                        & subsequence & non-entail & 9.790\%                      & 9.350\%                                 & better        \\
+%                        &             & entail     & 98.670\%                     & -1.330\%                                & worse         \\
+%                        & constituent & non-entail & 6.170\%                      & 5.510\%                                 & better        \\
+%                        &             & entail     & 94.730\%                     & -4.830\%                                & worse         \\
+%finetuned on SNLI Z-Aug & overlap     & non-entail & 38.830\%                     & 31.840\%                                & better        \\
+%                        &             & entail     & 92.800\%                     & -3.840\%                                & worse         \\
+%                        & subsequence & non-entail & 3.190\%                      & 2.750\%                                 & better        \\
+%                        &             & entail     & 99.680\%                     & -0.320\%                                & worse         \\
+%                        & constituent & non-entail & 3.320\%                      & 2.660\%                                 & better        \\
+%                        &             & entail     & 97.080\%                     & -2.480\%                                & worse        \\ \hline
+%\end{tabular}
+%\end{table}
+
+
+\begin{table}[]
+    \label{table10}
+    \caption{Break down result on HANS by bias type and label}
+    \begin{tabular}{lllrrl}
+        \textbf{Model}                   & \textbf{Bias type}   & \textbf{Label}      & \multicolumn{1}{l}{\textbf{Accuracy}} & \multicolumn{1}{l}{\textbf{Compare to baseline}} & \textbf{Better or not} \\ \hline
+        baseline                         & overlap             & non-entail          & 6.990\%                                & 0.000\%                                         & same          \\
+                                          &                     & entail              & 96.640\%                               & 0.000\%                                         & same          \\
+                                          & subsequence         & non-entail          & 0.440\%                                & 0.000\%                                         & same          \\
+                                          &                     & entail              & 100.000\%                              & 0.000\%                                         & same          \\
+                                          & constituent         & non-entail          & 0.660\%                                & 0.000\%                                         & same          \\
+                                          &                     & entail              & 99.560\%                               & 0.000\%                                         & same          \\
+        trained on SNLI Par-Z            & overlap             & non-entail          & 48.280\%                               & \textbf{41.290\%}                               & better        \\
+                                          &                     & entail              & 85.980\%                               & -10.660\%                                       & worse         \\
+                                          & subsequence         & non-entail          & 13.510\%                               & \textbf{13.070\%}                               & better        \\
+                                          &                     & entail              & 97.640\%                               & -2.360\%                                        & worse         \\
+                                          & constituent         & non-entail          & 19.720\%                               & \textbf{19.060\%}                               & better        \\
+                                          &                     & entail              & 87.090\%                               & -12.470\%                                       & worse         \\
+        finetuned on SNLI Par-Z          & overlap             & non-entail          & 53.590\%                               & \textbf{46.600\%}                               & better        \\
+                                          &                     & entail              & 89.160\%                               & -7.480\%                                        & worse         \\
+                                          & subsequence         & non-entail          & 4.870\%                                & \textbf{4.430\%}                                & better        \\
+                                          &                     & entail              & 98.750\%                               & -1.250\%                                        & worse         \\
+                                          & constituent         & non-entail          & 4.920\%                                & \textbf{4.260\%}                                & better        \\
+                                          &                     & entail              & 96.390\%                               & -3.170\%                                        & worse         \\
+        trained on SNLI Seq-Z            & overlap             & non-entail          & 38.480\%                               & \textbf{31.490\%}                               & better        \\
+                                          &                     & entail              & 94.240\%                               & -2.400\%                                        & worse         \\
+                                          & subsequence         & non-entail          & 5.330\%                                & \textbf{4.890\%}                                & better        \\
+                                          &                     & entail              & 98.650\%                               & -1.350\%                                        & worse         \\
+                                          & constituent         & non-entail          & 9.060\%                                & \textbf{8.400\%}                                & better        \\
+                                          &                     & entail              & 94.930\%                               & -4.630\%                                        & worse         \\
+        finetuned on SNLI Seq-Z          & overlap             & non-entail          & 56.930\%                               & \textbf{49.940\%}                               & better        \\
+                                          &                     & entail              & 89.720\%                               & -6.920\%                                        & worse         \\
+                                          & subsequence         & non-entail          & 4.200\%                                & \textbf{3.760\%}                                & better        \\
+                                          &                     & entail              & 99.460\%                               & -0.540\%                                        & worse         \\
+                                          & constituent         & non-entail          & 3.430\%                                & \textbf{2.770\%}                                & better        \\
+                                          &                     & entail              & 96.860\%                               & -2.700\%                                        & worse         \\
+        trained on SNLI Z-Aug            & overlap             & non-entail          & 59.960\%                               & \textbf{52.970\%}                               & better        \\
+                                          &                     & entail              & 90.180\%                               & -6.460\%                                        & worse         \\
+                                          & subsequence         & non-entail          & 9.790\%                                & \textbf{9.350\%}                                & better        \\
+                                          &                     & entail              & 98.670\%                               & -1.330\%                                        & worse         \\
+                                          & constituent         & non-entail          & 6.170\%                                & \textbf{5.510\%}                                & better        \\
+                                          &                     & entail              & 94.730\%                               & -4.830\%                                        & worse         \\
+        finetuned on SNLI Z-Aug          & overlap             & non-entail          & 38.830\%                               & \textbf{31.840\%}                               & better        \\
+                                          &                     & entail              & 92.800\%                               & -3.840\%                                        & worse         \\
+                                          & subsequence         & non-entail          & 3.190\%                                & \textbf{2.750\%}                                & better        \\
+                                          &                     & entail              & 99.680\%                               & -0.320\%                                        & worse         \\
+                                          & constituent         & non-entail          & 3.320\%                                & \textbf{2.660\%}                                & better        \\
+                                          &                     & entail              & 97.080\%                               & -2.480\%                                        & worse        \\ \hline
+    \end{tabular}
+\end{table}
+
+
+\section{Conclusion}
 
 
 \section*{References}
 
-
-References follow the acknowledgments in the camera-ready paper. Use unnumbered first-level heading for
-the references. Any choice of citation style is acceptable as long as you are
-consistent. It is permissible to reduce the font size to \verb+small+ (9 point)
-when listing the references.
-Note that the Reference section does not count towards the page limit.
-\medskip
-
-
 {
 \small
 
+\label{ref1}
+[1] R. Thomas McCoy, Ellie Pavlick \ \& Tal Linzen (2019) Right for the Wrong Reasons: Diagnosing Syntactic Heuristics in Natural Language Inference. In {\it Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics}, pages 3428–3448, Stroudsburg, PA, USA, 2019. Association for Computational Linguistics.
 
-[1] Alexander, J.A.\ \& Mozer, M.C.\ (1995) Template-based algorithms for
-connectionist rule extraction. In G.\ Tesauro, D.S.\ Touretzky and T.K.\ Leen
-(eds.), {\it Advances in Neural Information Processing Systems 7},
-pp.\ 609--616. Cambridge, MA: MIT Press.
-
-
-[2] Bower, J.M.\ \& Beeman, D.\ (1995) {\it The Book of GENESIS: Exploring
-  Realistic Neural Models with the GEneral NEural SImulation System.}  New York:
-TELOS/Springer--Verlag.
-
-
-[3] Hasselmo, M.E., Schnell, E.\ \& Barkai, E.\ (1995) Dynamics of learning and
-recall at excitatory recurrent synapses and cholinergic modulation in rat
-hippocampal region CA3. {\it Journal of Neuroscience} {\bf 15}(7):5249-5262.
+\label{ref2}
+[2] Yuxiang Wu, Matt Gardner, Pontus Stenetorp \ \& Pradeep Dasigi (2022) Generating Data to Mitigate Spurious Correlations in Natural Language Inference Datasets. In {\it Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics}, ACL 2022.
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

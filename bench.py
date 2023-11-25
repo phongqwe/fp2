@@ -325,30 +325,37 @@ def findBiasDataInTrain(label=0):
     for example in dataset["train"]:
         hypo = example["hypothesis"]
         premise = example["premise"]
-        if example["label"] == 0:
+        label = example["label"]
+        if label == 0:
             if isSubsequence(hypo, premise):
                 rtLabel0.subsequenceCount += 1
+                rtLabel0.totalCount += 1
             elif isConstituent(hypo, premise):
                 rtLabel0.constituentCount += 1
+                rtLabel0.totalCount += 1
             elif isLexicalOverlap(hypo, premise):
                 rtLabel0.lexicalOverlapCount += 1
-            rtLabel0.totalCount += 1
-        if example["label"] == 1:
+                rtLabel0.totalCount += 1
+        if label == 1:
             if isSubsequence(hypo, premise):
                 rtLabel1.subsequenceCount += 1
+                rtLabel1.totalCount += 1
             elif isConstituent(hypo, premise):
                 rtLabel1.constituentCount += 1
+                rtLabel1.totalCount += 1
             elif isLexicalOverlap(hypo, premise):
                 rtLabel1.lexicalOverlapCount += 1
-            rtLabel1.totalCount += 1
-        if example["label"] == 2:
+                rtLabel1.totalCount += 1
+        if label == 2:
             if isSubsequence(hypo, premise):
                 rtLabel2.subsequenceCount += 1
+                rtLabel2.totalCount += 1
             elif isConstituent(hypo, premise):
                 rtLabel2.constituentCount += 1
+                rtLabel2.totalCount += 1
             elif isLexicalOverlap(hypo, premise):
                 rtLabel2.lexicalOverlapCount += 1
-            rtLabel2.totalCount += 1
+                rtLabel2.totalCount += 1
 
     return rtLabel0, rtLabel1, rtLabel2
 
@@ -651,6 +658,30 @@ def evaluateFixedModelOnSubSetOfTestData(fixedModelPathList: list[str]):
         file.write(json.dumps(asd))
 
 
+def breakDownHansByType():
+    hans = datasets.load_dataset("hans")
+    hansDataset = datasets.concatenate_datasets([hans["train"],hans["validation"]])
+    rtLabel0 = EntailmentBiasInTrainData()
+    rtLabel1 = EntailmentBiasInTrainData()
+
+    for s in hansDataset:
+        label = s["label"]
+        bias = s["heuristic"]
+
+        if label==0:
+            rtx = rtLabel0
+        if label==1:
+            rtx = rtLabel1
+        if bias == "lexical_overlap":
+            rtx.lexicalOverlapCount+=1
+        elif bias == "subsequence":
+            rtx.subsequenceCount += 1
+        elif bias == "constituent":
+            rtx.constituentCount+=1
+
+    return rtLabel0,rtLabel1
+
+
 
 
 loadDataAndModel()
@@ -681,3 +712,12 @@ loadDataAndModel()
 #         snliAugZModelFineTune,
 #     ]
 # )
+
+# entail, contrast,neutra= findBiasDataInTrain()
+# print(entail)
+# print(contrast)
+# print(neutra)
+
+r0,r1=breakDownHansByType()
+print(r0)
+print(r1)

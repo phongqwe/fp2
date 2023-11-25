@@ -22,7 +22,7 @@ runEvaluation = True
 # run evaluation on test set
 runEvaluationOnTestSet = True
 # replace SNLI with HANS, this will override runEvaluationOnTestSet
-useHans = False
+useHans = True
 
 # 3 possible values:
 # "lexical_overlap",
@@ -209,7 +209,10 @@ def main(
         if useHans:
             eval_split = hansSplit
             print(f">> run evaluation on HANS split: {eval_split}")
-        eval_dataset = dataset[eval_split]
+        if useHans and eval_split == "all":
+            eval_dataset = datasets.concatenate_datasets([dataset["train"], dataset["validation"]])
+        else:
+            eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         eval_dataset_featurized = eval_dataset.map(
@@ -330,21 +333,22 @@ if __name__ == "__main__":
         snliAugZModel,
         snliAugZModelFineTune,
     ]
-    results = []
-    for mp in modelPathList:
-        rs = main(mp,None,None,)
-        results.append(rs)
-
-    with open("testResult_overall.json","w") as file:
-        jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
-        file.write(jsonStr)
-
-    #
     # results = []
     # for mp in modelPathList:
     #     rs = main(mp,None,None,)
     #     results.append(rs)
     #
-    # with open("hansResult_overall.json","w") as file:
+    # with open("testResult_overall.json","w") as file:
     #     jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
     #     file.write(jsonStr)
+
+
+    results = []
+    hansSplit = "all" # "train" "validation" "all"
+    for mp in modelPathList:
+        rs = main(mp,None,None,hansSplit)
+        results.append(rs)
+
+    with open(f"hansResult_overall_{hansSplit}.json","w") as file:
+        jsonStr = json.dumps(list(map(lambda r: dataclasses.asdict(r),results)))
+        file.write(jsonStr)
