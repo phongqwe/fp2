@@ -36,7 +36,7 @@
 \usepackage{xcolor}         % colors
 
 
-\title{Mitigating dataset atifact using ....}
+\title{Mitigating dataset atifact using debiased datasets}
 
 
 % The \author macro works with any number of authors. There are two commands
@@ -418,7 +418,7 @@ For the same data set, a trained model perform significantly better than a finet
 
 \section{Conclusion}
 
-Overall, our new models show little to no improvement on the SNLI test set, but show significant improvement on HANS. However, further analysis on HANS result shows performance slightly drops for samples with entailment gold label, while rises significantly for non-entailment.
+Overall, our new models show little to no improvement on the SNLI test set, but show significant improvement on HANS. Further analysis on HANS result shows performance slightly drops for samples with entailment gold label, while rises significantly for non-entailment.
 The improvement on non-entailment is not even among subset of data, some are many times better while others only increase slightly.
 The way the model is created (trained vs finetuned) and the way the synthetic datasets are created also have impact on the accuracy of the model.
 In conclusion, our new models are better at \textbf{not} mistaking non-entailment as entailment.
