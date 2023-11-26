@@ -80,20 +80,21 @@
 \section{Introduction}
 Models for natural language inference may contain dataset artifact.
 They may assume a relationship (entailment, contrast, or neutral) between a hypothesis and premise base on unrelated factors such as the amount of overlapping words.
-In this report, we use the Heuristic Analysis for NLI Systems (HANS) dataset on model ELECTRA-small trained on the Stanford Natural Language Inference (SNLI) Corpus to check for three type of baises (\hyperref[ref1]{McCoy et al.,2019}), as in \hyperref[table1]{Table 1}. Then we will try to de-bias the model by training and finetuning it on existing debiased dataset generated base on SNLI (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
+In this report, we use the Heuristic Analysis for NLI Systems (HANS) dataset on model ELECTRA-small trained on the Stanford Natural Language Inference (SNLI) Corpus to check for three types of bias (\hyperref[ref1]{McCoy et al.,2019}), as in \hyperref[table1]{Table 1}.
+Then we will try to de-bias the model by re-training and finetuning it on existing debiased datasets generated base on SNLI (\hyperref[ref2]{Yuxiang Wu et al.,2022}).
 
 
 
 \begin{table}[h]
     \label{table1}
-    \caption{Three types of biases}
+    \caption{Three types of bias}
 \centering
 \begin{tabular}{p{3cm} p{5cm} p{5cm}}
 \hline
 \textbf{Bias}    & \textbf{Definition}    & \textbf{Example}    \\ \hline
-Lexical overlap  & A premise entails all hypotheses
-constructed from words in the premise  & "\textbf{the dog is running on the road}" wrongly entails "\textbf{the dog is} not \textbf{running on the road}"  \\
-Subsequence  & A premise entails all of its contiguous subsequences.  & "I see don't see \textbf{the squirrels running}" wrongly entails "\textbf{the squirrls running}" \\
+Lexical overlap  & Assume that a premise entails all hypotheses
+constructed from words in the premise  & "\textbf{the dog is running on the road}" wrongly entails "\textbf{the dog is} not \textbf{running on the road}"  \\ \hline
+Subsequence  & Assume that a premise entails all of its contiguous subsequences.  & "I see don't see \textbf{the squirrels running}" wrongly entails "\textbf{the squirrels running}" \\ \hline
 Constituent  & Assume that a premise entails all complete subtrees in its parse tree. & "if \textbf{the dog is hungry}, it eats" wrongly entails "\textbf{the dog is hungry}"  \\ \hline
 \end{tabular}
 
@@ -110,7 +111,7 @@ Our approach is as follows:
       \item breakdown accuracy on test set of SNLI by type of bias and by label
       \item breakdown accuracy on test set of HANS by type of bias and by label
     \end{itemize}
-  \item Then we train 3 new models and finetune the baseline model using the following 3 synthetic dataset created by \hyperref[ref2]{Yuxiang Wu et al.,2022}, this will result in 6 new models:
+  \item Then we train 3 new models and finetune the baseline model using the following 3 synthetic dataset created by \hyperref[ref2]{Yuxiang Wu et al.,2022}, this will result in 6 new models. The three synthetic datasets are:
     \begin{itemize}
       \item SNLI Par-Z
       \item SNLI Seq-A
@@ -136,7 +137,7 @@ Let $\mathcal{D}$ be the original SNLI, and $\mathcal{D}_{S}$ be the synthetic S
 
 \section{Baseline analysis}
 \subsection{Analysis on SNLI test set and HANS}
-Running the baseline model on SNLI and HANS produce the overall accuracy (\hyperref[table2]{Table 2}).
+Running the baseline model on SNLI and HANS produce the overall accuracy in \hyperref[table2]{Table 2}.
 
 \begin{table}[h]
     \label{table2}
@@ -152,11 +153,11 @@ Running the baseline model on SNLI and HANS produce the overall accuracy (\hyper
 \end{table}
 
 
-The accuracy on both HANS train set and validation set is 50.715\% which is significantly lower than the accuracy 88.88\% from SNLI test set.
-This indicates that the baseline model is susceptible to the three type of bias describe above.
+The accuracy on both HANS is 50.715\% which is significantly lower than the accuracy 88.88\% from SNLI test set.
+This indicates that the baseline model is susceptible to the three types of bias describe above.
 
 From SNLI test set, we extract three subsets that contain only overlapping (with Jaccard score > 0.5), subsequence, and constituent samples.
-The item count of each subset is in \hyperref[table3]{Table 3}.
+The item count of each subset is in \hyperref[table3]{Table 3}, with each number represents a subset.
 
 
 \begin{table}[H]
@@ -173,11 +174,11 @@ The item count of each subset is in \hyperref[table3]{Table 3}.
 
 \end{table}
 
-This breakdown shows that the SNLI test set is highly skewed and contains a small number of samples that belong to one of the 3 biases.
+This breakdown shows that the SNLI test set is highly skewed and contains only a small number of samples that belong to one of the 3 biases.
 It does not contain any subsequence sample, and all of the constituent samples are labeled entailment.
-Overlap subset is larger than the others, but is skewed toward entailment.
+Overlap count is larger than the others, but is skewed toward entailment.
 Therefore, SNLI test set can be only used to measure the overall performance and performance on samples that do not belong to one of the three biases.
-However we still run the baseline model each of these subset to get the accuracy on these subsets, in \hyperref[table4]{Table 4}.
+However we still run the baseline model each of these subset to get the accuracy on these subsets, in \hyperref[table4]{Table 4}, with each accuracy number represents a subset.
 
 \begin{table}[h]
     \caption{Accuracy (\%) per subset (by bias type and gold label) of SNLI test set}
@@ -198,6 +199,7 @@ However we still run the baseline model each of these subset to get the accuracy
 We perform similar breakdown on HANS for all three type of biases and 2 gold label(entailment and non-entailment) (\hyperref[table5]{Table 5} and \hyperref[table6]{Table 6}).
 The baseline model correctly classifies 96-100\% of entail sample and at the same time it incorrectly classify nearly all the non-entail sample.
 This means the model is equally susceptible to all three type of bias.
+It is noted that each number in \hyperref[table5]{Table 5} and \hyperref[table6]{Table 6} represents an independent subset; they are not related in anyway.
 
 \begin{table}[H]
     \caption{Item count of subsets by bias type and gold label in HANS}
@@ -277,7 +279,7 @@ For each, we compute the same statistic using the new models on the HANS and SNL
 \end{table}
 
 From \hyperref[table8]{Table 8}, of the 6 new model, only the model finetuned on SNLI Z-Aug perform slightly better than the baseline model.
-The finetuned models on SNLI Par-Z and SNLI Seq-Z are slightly worse than the baseline, while the two trained from scratch on those datasets perform significantly worse with about 3\% less than the baseline.
+The finetuned models on SNLI Par-Z and SNLI Seq-Z are slightly worse than the baseline, while the two trained from scratch on Par-Z and Seq-Z perform significantly worse with about 3\% less than the baseline.
 
 \begin{table}[H]
     \label{table9}
@@ -287,12 +289,12 @@ The finetuned models on SNLI Par-Z and SNLI Seq-Z are slightly worse than the ba
 \hline
 \textbf{Model}                   & \textbf{Accuracy (\%)} \\ \hline
 \textbf{Baseline}                & 50.715                 \\
-\textbf{Trained on SNLI Par-Z}   & 58.703                 \\
-\textbf{Finetuned on SNLI Par-Z} & 57.947                 \\
-\textbf{Trained on SNLI Seq-Z}   & 56.782                 \\
-\textbf{Finetuned on SNLI Seq-Z} & 58.433                 \\
-\textbf{Trained on SNLI Z-Aug}   & 59.917                 \\
-\textbf{Finetuned on SNLI Z-Aug} & 55.817                 \\ \hline
+\textbf{Trained on SNLI Par-Z}   & \textbf{58.703}                 \\
+\textbf{Finetuned on SNLI Par-Z} & \textbf{57.947}                 \\
+\textbf{Trained on SNLI Seq-Z}   & \textbf{56.782}                 \\
+\textbf{Finetuned on SNLI Seq-Z} & \textbf{58.433}                 \\
+\textbf{Trained on SNLI Z-Aug}   & \textbf{59.917}                 \\
+\textbf{Finetuned on SNLI Z-Aug} & \textbf{55.817}                 \\ \hline
 \end{tabular}
 
 \end{table}
@@ -302,67 +304,36 @@ From \hyperref[table9]{Table 9}, all the new models perform better than the base
 A further breaking down HANS result by bias type and label (\hyperref[table10]{Table 10}) show that all 6 new models perform better on all non-entailment subset and slightly worse on entailment.
 The large improvement is on classifying non-entailment for overlapping sample.
 The smallest improvement is 31.49\% while the largest is 52.97\%
-For other subset, the improvement is significantly less ranging from 19\% to as low as around 2\%.
+For other subsets, the improvement is significantly less ranging from 19\% to as low as around 2\%.
 This means the new models are much better at \textbf{not} mistaking overlapping samples as entailment, but not that much (still better, but not much) for other type of biases.
 
 \section{Discussion}
-\subsection{Deviation between debias dataset}
-There are signification differences between the result of model trained on debiased dataset and model finetunes on the same dataset.
-There are so significant differences between models train on different dataset, or between models finetuned on different dataset.
+\subsection{Deviation between models}
+There are differences between the result of model trained on debiased dataset and model finetuned on the same dataset.
+There are also differences between models trained on different datasets, or between models finetuned on different datasets.
+For the same data set, generally, finetuned models perform better at classifying entail samples, while trained models perform better at classifying non-entail.
+When compare 2 models in term of the dataset they are trained/finetuned on, given that they are both either trained or finetuned, the difference is less clean-cut.
+A model perform better on some subsets, but worse on other.
+For example, among the trained models, we observe the followings:
+\begin{itemize}
+    \item Par-Z vs Z-Aug: better (non-entail, subsequence) and (non-entail, constituent) while do worse on other.
+    \item Par-Z vs Z-Aug: better (non-entail, subsequence) and (non-entail, constituent) while do worse on other.
+    \item Par-Z vs Seq-Z: better at non-entail worse at entail
+    \item Par-Z vs Seq-Z: better at non-entail worse at entail
+    \item - Seq-Z vs Z-Aug:
+    \begin{itemize}
+        \item Seq-Z better at classifying subsequence, Z-Aug better at constituent
+        \item  Aug-Z better at (non-entail, overlap); Seq-Z better at (entail, overlap)
+    \end{itemize}
+\end{itemize}
 
-For the same data set, a trained model perform significantly better than a finetuned model in term of
+The differences between model trained/finetuned on different dataset are expected, but the clean-cut difference between a trained and a finetuned model on the same dataset may signal that the synthetic datasets may have excluded patterns or features that can be used in classifying entail samples, causing the trained model to perform worse than finetune models.
+
+\subsection{Trained vs finetuned}
+
+\subsection{Deviation between datasets}
 
 
-%\begin{table}[]
-%     \label{table10}
-%    \caption{Break down result on HANS by bias type and label}
-%
-%\begin{tabular}{lllrrl}
-%\textbf{model}                   & \textbf{bias type}   & \textbf{label}      & \multicolumn{1}{l}{\textbf{accuracy}} & \multicolumn{1}{l}{\textbf{Compare to baseline}} & \textbf{better or not} \\ \hline
-%baseline                & overlap     & non-entail & 6.990\%                      & 0.000\%                                 & same          \\
-%                        &             & entail     & 96.640\%                     & 0.000\%                                 & same          \\
-%                        & subsequence & non-entail & 0.440\%                      & 0.000\%                                 & same          \\
-%                        &             & entail     & 100.000\%                    & 0.000\%                                 & same          \\
-%                        & constituent & non-entail & 0.660\%                      & 0.000\%                                 & same          \\
-%                        &             & entail     & 99.560\%                     & 0.000\%                                 & same          \\
-%trained on SNLI Par-Z   & overlap     & non-entail & 48.280\%                     & 41.290\%                                & better        \\
-%                        &             & entail     & 85.980\%                     & -10.660\%                               & worse         \\
-%                        & subsequence & non-entail & 13.510\%                     & 13.070\%                                & better        \\
-%                        &             & entail     & 97.640\%                     & -2.360\%                                & worse         \\
-%                        & constituent & non-entail & 19.720\%                     & 19.060\%                                & better        \\
-%                        &             & entail     & 87.090\%                     & -12.470\%                               & worse         \\
-%finetuned on SNLI Par-Z & overlap     & non-entail & 53.590\%                     & 46.600\%                                & better        \\
-%                        &             & entail     & 89.160\%                     & -7.480\%                                & worse         \\
-%                        & subsequence & non-entail & 4.870\%                      & 4.430\%                                 & better        \\
-%                        &             & entail     & 98.750\%                     & -1.250\%                                & worse         \\
-%                        & constituent & non-entail & 4.920\%                      & 4.260\%                                 & better        \\
-%                        &             & entail     & 96.390\%                     & -3.170\%                                & worse         \\
-%trained on SNLI Seq-Z   & overlap     & non-entail & 38.480\%                     & 31.490\%                                & better        \\
-%                        &             & entail     & 94.240\%                     & -2.400\%                                & worse         \\
-%                        & subsequence & non-entail & 5.330\%                      & 4.890\%                                 & better        \\
-%                        &             & entail     & 98.650\%                     & -1.350\%                                & worse         \\
-%                        & constituent & non-entail & 9.060\%                      & 8.400\%                                 & better        \\
-%                        &             & entail     & 94.930\%                     & -4.630\%                                & worse         \\
-%finetuned on SNLI Seq-Z & overlap     & non-entail & 56.930\%                     & 49.940\%                                & better        \\
-%                        &             & entail     & 89.720\%                     & -6.920\%                                & worse         \\
-%                        & subsequence & non-entail & 4.200\%                      & 3.760\%                                 & better        \\
-%                        &             & entail     & 99.460\%                     & -0.540\%                                & worse         \\
-%                        & constituent & non-entail & 3.430\%                      & 2.770\%                                 & better        \\
-%                        &             & entail     & 96.860\%                     & -2.700\%                                & worse         \\
-%trained on SNLI Z-Aug   & overlap     & non-entail & 59.960\%                     & 52.970\%                                & better        \\
-%                        &             & entail     & 90.180\%                     & -6.460\%                                & worse         \\
-%                        & subsequence & non-entail & 9.790\%                      & 9.350\%                                 & better        \\
-%                        &             & entail     & 98.670\%                     & -1.330\%                                & worse         \\
-%                        & constituent & non-entail & 6.170\%                      & 5.510\%                                 & better        \\
-%                        &             & entail     & 94.730\%                     & -4.830\%                                & worse         \\
-%finetuned on SNLI Z-Aug & overlap     & non-entail & 38.830\%                     & 31.840\%                                & better        \\
-%                        &             & entail     & 92.800\%                     & -3.840\%                                & worse         \\
-%                        & subsequence & non-entail & 3.190\%                      & 2.750\%                                 & better        \\
-%                        &             & entail     & 99.680\%                     & -0.320\%                                & worse         \\
-%                        & constituent & non-entail & 3.320\%                      & 2.660\%                                 & better        \\
-%                        &             & entail     & 97.080\%                     & -2.480\%                                & worse        \\ \hline
-%\end{tabular}
-%\end{table}
 
 
 \begin{table}[]
@@ -419,9 +390,9 @@ For the same data set, a trained model perform significantly better than a finet
 \section{Conclusion}
 
 Overall, our new models show little to no improvement on the SNLI test set, but show significant improvement on HANS. Further analysis on HANS result shows performance slightly drops for samples with entailment gold label, while rises significantly for non-entailment.
-The improvement on non-entailment is not even among subset of data, some are many times better while others only increase slightly.
-The way the model is created (trained vs finetuned) and the way the synthetic datasets are created also have impact on the accuracy of the model.
-In conclusion, our new models are better at \textbf{not} mistaking non-entailment as entailment.
+The improvement on non-entailment is not even among subset of HANS, some are significantly better while others only increase slightly.
+The way the new models are created (trained vs finetuned) and the way the synthetic datasets are created also have impact on the accuracy of the model.
+In conclusion, generally our new models are better at \textbf{not} mistaking non-entailment as entailment.
 
 
 \section*{References}
